@@ -20,7 +20,7 @@ async function createAdmin() {
     const admin = await User.create({
       firstName: 'Admin',
       lastName: 'System',
-      email: 'admin@test.com',
+      email: 'admin@viloassist.com',
       password: 'admin123', // Sera hashé automatiquement par le hook beforeSave
       phone: '1234567890',
       role: 'admin',
