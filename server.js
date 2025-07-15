@@ -15,15 +15,14 @@ const emailRoutes = require('./routes/email');
 
 const app = express();
 
-// Middleware globaux
+// ✅ CORS: liste des domaines autorisés
 const allowedOrigins = [
-  'https://https://vilo-assist-pro-frontend.vercel.app/',
+  'https://vilo-assist-pro-frontend.vercel.app',
   'http://localhost:8080'
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Autorise les requêtes sans origin (ex: postman) ou celles dans la liste
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -51,7 +50,7 @@ app.use('/api/admin', emailRoutes); // ✔️ Unifié sous /api/admin
 app.use('/api/contacts', contactRoutes);
 app.use('/api/appointments', appointmentRoutes);
 
-// Route de santé de l'API
+// ✅ Route de santé de l'API
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
@@ -61,7 +60,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Middleware de gestion d'erreurs globales
+// ❌ Middleware global pour erreurs
 app.use((err, req, res, next) => {
   console.error('❌ Erreur non gérée:', err.message);
   res.status(err.status || 500).json({
@@ -71,7 +70,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Route 404 pour les routes non trouvées
+// Route 404
 app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
@@ -79,7 +78,7 @@ app.use('*', (req, res) => {
   });
 });
 
-// Démarrage du serveur
+// ✅ Démarrage du serveur
 const PORT = process.env.PORT || 3001;
 
 async function startServer() {
