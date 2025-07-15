@@ -37,11 +37,17 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Middleware de logging en développement
 if (process.env.NODE_ENV === 'development') {
+  await sequelize.sync({ alter: true }); // 👈 force la mise à jour du schéma
   app.use((req, res, next) => {
     console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);
     next();
   });
 }
+
+if (process.env.NODE_ENV === 'development') {
+  await sequelize.sync({ alter: true }); // 👈 force la mise à jour du schéma
+}
+
 
 // Routes API
 app.use('/api/auth', authRoutes);
