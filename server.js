@@ -1,12 +1,14 @@
-// app.js ou server.js - Configuration principale de l'application
+// app.js - Configuration principale de l'application
 const express = require('express');
 const cors = require('cors');
-const { sequelize } = require('./models'); // configuration Sequelize
 const dotenv = require('dotenv');
+dotenv.config();
+
+const { sequelize } = require('./models'); // configuration Sequelize
 
 // Import des routes
 const contactRoutes = require('./routes/contacts');
-const appointmentRoutes = require('./routes/appointments'); 
+const appointmentRoutes = require('./routes/appointments');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const emailRoutes = require('./routes/email');
@@ -14,10 +16,23 @@ const emailRoutes = require('./routes/email');
 const app = express();
 
 // Middleware globaux
+const allowedOrigins = [
+  'https://vilo-assist-pro-jet.vercel.app',
+  'http://localhost:8080'
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:8080',
+  origin: (origin, callback) => {
+    // Autorise les requêtes sans origin (ex: postman) ou celles dans la liste
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS policy: origin ${origin} not allowed`));
+    }
+  },
   credentials: true
 }));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -31,11 +46,10 @@ if (process.env.NODE_ENV === 'development') {
 
 // Routes API
 app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes); 
+app.use('/api/admin', adminRoutes);
+app.use('/api/admin', emailRoutes); // ✔️ Unifié sous /api/admin
 app.use('/api/contacts', contactRoutes);
 app.use('/api/appointments', appointmentRoutes);
-app.use(express.json());
-app.use('/api/admin', emailRoutes);
 
 // Route de santé de l'API
 app.get('/api/health', (req, res) => {
@@ -47,10 +61,9 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Middleware de gestion d'erreur globale
+// Middleware de gestion d'erreurs globales
 app.use((err, req, res, next) => {
-  console.error('Erreur non gérée:', err);
-  
+  console.error('❌ Erreur non gérée:', err.message);
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Erreur interne du serveur',
@@ -66,34 +79,32 @@ app.use('*', (req, res) => {
   });
 });
 
+// Démarrage du serveur
 const PORT = process.env.PORT || 3001;
 
-// Fonction pour démarrer le serveur
 async function startServer() {
   try {
-    // Tester la connexion à la base de données
     await sequelize.authenticate();
     console.log('✅ Connexion à la base de données établie avec succès.');
 
-    // Synchroniser les modèles (uniquement en développement)
     if (process.env.NODE_ENV === 'development') {
-      await sequelize.sync({ alter: false }); // Use alter: true pour les modifications de schema
+      await sequelize.sync({ alter: false });
       console.log('✅ Modèles synchronisés avec la base de données.');
     }
-    
+
     app.listen(PORT, () => {
       console.log(`🚀 Serveur démarré sur le port ${PORT}`);
       console.log(`📝 API disponible sur: http://localhost:${PORT}/api`);
       console.log(`❤️  Health check: http://localhost:${PORT}/api/health`);
     });
-    
+
   } catch (error) {
     console.error('❌ Impossible de se connecter à la base de données:', error);
     process.exit(1);
   }
 }
 
-// Gestion des signaux de fermeture propre
+// Gestion des signaux pour fermeture propre
 process.on('SIGINT', async () => {
   console.log('\n⏹️  Arrêt du serveur...');
   await sequelize.close();
@@ -108,7 +119,6 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
-// Démarrer le serveur
 startServer();
 
 module.exports = app;
