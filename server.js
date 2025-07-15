@@ -37,15 +37,10 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Middleware de logging en développement
 if (process.env.NODE_ENV === 'development') {
-  await sequelize.sync({ alter: true }); // 👈 force la mise à jour du schéma
   app.use((req, res, next) => {
     console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);
     next();
   });
-}
-
-if (process.env.NODE_ENV === 'development') {
-  await sequelize.sync({ alter: true }); // 👈 force la mise à jour du schéma
 }
 
 
@@ -93,7 +88,7 @@ async function startServer() {
     console.log('✅ Connexion à la base de données établie avec succès.');
 
     if (process.env.NODE_ENV === 'development') {
-      await sequelize.sync({ alter: false });
+      await sequelize.sync({ alter: true });
       console.log('✅ Modèles synchronisés avec la base de données.');
     }
 
