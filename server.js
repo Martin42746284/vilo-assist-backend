@@ -17,7 +17,7 @@ const app = express();
 
 // Middleware globaux
 const allowedOrigins = [
-  'https://vilo-assist-pro-jet.vercel.app',
+  'https://https://vilo-assist-pro-frontend.vercel.app/',
   'http://localhost:8080'
 ];
 
