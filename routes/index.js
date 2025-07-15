@@ -8,6 +8,7 @@ const contactRoutes = require('./contacts');
 const appointmentRoutes = require('./appointments');
 const adminRoutes = require('./admin');
 const userRoutes = require('./users');
+const testRoutes = require('./routes/test'); // chemin à adapter
 
 // Configuration des routes
 router.use('/auth', authRoutes);
@@ -15,6 +16,7 @@ router.use('/contacts', contactRoutes);
 router.use('/appointments', appointmentRoutes);
 router.use('/admin', adminRoutes);
 router.use('/users', userRoutes);
+router.use('/api', testRoutes);
 
 // Route de test
 router.get('/health', (req, res) => {
