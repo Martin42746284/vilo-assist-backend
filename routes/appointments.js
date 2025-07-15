@@ -5,19 +5,14 @@ const { validationResult } = require('express-validator');
 
 // POST /api/appointments - Créer un nouveau rendez-vous
 router.post('/', async (req, res) => {
-  // Validation des données
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ 
-      success: false, 
-      errors: errors.array() 
-    });
+    return res.status(400).json({ success: false, errors: errors.array() });
   }
 
   try {
     const { client_name, client_email, date, time, service, message } = req.body;
 
-    // Validation manuelle des champs obligatoires
     if (!client_name || !client_email || !date || !time || !service) {
       return res.status(400).json({
         success: false,
@@ -25,24 +20,17 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Création du contact (si message existe)
     if (message) {
-      await Contact.create({
-        name: client_name,
-        email: client_email,
-        service,
-        message
-      });
+      await Contact.create({ name: client_name, email: client_email, service, message });
     }
 
-    // Création du rendez-vous
     const newAppointment = await Appointment.create({
-      client_name,  // Correspond au modèle
+      client_name,
       client_email,
       date,
       time,
       service,
-      status: 'en_attente'  // Correspond à votre ENUM
+      status: 'en_attente'
     });
 
     res.status(201).json({
@@ -53,8 +41,6 @@ router.post('/', async (req, res) => {
 
   } catch (error) {
     console.error('Erreur création rendez-vous:', error);
-    
-    // Gestion des erreurs spécifiques
     if (error.name === 'SequelizeValidationError') {
       return res.status(400).json({
         success: false,
@@ -71,7 +57,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// GET /api/appointments/:id - Récupérer un rendez-vous spécifique
+// GET /api/appointments/:id
 router.get('/:id', async (req, res) => {
   try {
     const appointment = await Appointment.findByPk(req.params.id, {
@@ -79,44 +65,33 @@ router.get('/:id', async (req, res) => {
     });
 
     if (!appointment) {
-      return res.status(404).json({
-        success: false,
-        message: 'Rendez-vous non trouvé'
-      });
+      return res.status(404).json({ success: false, message: 'Rendez-vous non trouvé' });
     }
 
-    res.json({ 
-      success: true, 
-      data: appointment 
-    });
+    res.json({ success: true, data: appointment });
 
   } catch (error) {
     console.error('Erreur récupération rendez-vous:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Erreur serveur',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
 
-// PUT /api/appointments/:id - Mettre à jour un rendez-vous
+// PUT /api/appointments/:id
 router.put('/:id', async (req, res) => {
   try {
     const appointment = await Appointment.findByPk(req.params.id);
 
     if (!appointment) {
-      return res.status(404).json({
-        success: false,
-        message: 'Rendez-vous non trouvé'
-      });
+      return res.status(404).json({ success: false, message: 'Rendez-vous non trouvé' });
     }
 
-    // Ne permet que la mise à jour des champs autorisés
     const { status } = req.body;
-    const allowedUpdates = { status };
 
-    await appointment.update(allowedUpdates);
+    await appointment.update({ status });
 
     res.json({
       success: true,
@@ -126,7 +101,6 @@ router.put('/:id', async (req, res) => {
 
   } catch (error) {
     console.error('Erreur mise à jour rendez-vous:', error);
-    
     if (error.name === 'SequelizeValidationError') {
       return res.status(400).json({
         success: false,
@@ -135,18 +109,29 @@ router.put('/:id', async (req, res) => {
       });
     }
 
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Erreur serveur',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
 
-// DELETE /api/appointments/:id - Supprimer un rendez-vous
+// DELETE /api/appointments/:id
 router.delete('/:id', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+
+  console.log(`🗑️ Tentative suppression rendez-vous ID: ${id}`);
+
+  if (isNaN(id)) {
+    return res.status(400).json({
+      success: false,
+      message: 'ID invalide'
+    });
+  }
+
   try {
-    const appointment = await Appointment.findByPk(req.params.id);
+    const appointment = await Appointment.findByPk(id);
 
     if (!appointment) {
       return res.status(404).json({
@@ -155,7 +140,6 @@ router.delete('/:id', async (req, res) => {
       });
     }
 
-    // Vérification si le rendez-vous peut être supprimé (optionnel)
     if (appointment.status === 'confirmé') {
       return res.status(400).json({
         success: false,
@@ -172,8 +156,6 @@ router.delete('/:id', async (req, res) => {
 
   } catch (error) {
     console.error('Erreur suppression rendez-vous:', error);
-    
-    // Gestion des erreurs spécifiques
     if (error.name === 'SequelizeForeignKeyConstraintError') {
       return res.status(400).json({
         success: false,
@@ -181,8 +163,8 @@ router.delete('/:id', async (req, res) => {
       });
     }
 
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Erreur serveur lors de la suppression',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
