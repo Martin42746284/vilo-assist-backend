@@ -4,20 +4,26 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const { sequelize } = require('./models');
-const routes = require('./routes'); // ← ✅ On importe le routeur central
+const { sequelize } = require('./models'); // configuration Sequelize
+
+// Import des routes
+const contactRoutes = require('./routes/contacts');
+const appointmentRoutes = require('./routes/appointments');
+const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/admin');
+const emailRoutes = require('./routes/email');
 
 const app = express();
 
-// ✅ Définition des origines autorisées
+// Middleware globaux
 const allowedOrigins = [
   'https://vilo-assist-pro-jet.vercel.app',
   'http://localhost:8080'
 ];
 
-// ✅ Middleware CORS personnalisé
 app.use(cors({
   origin: (origin, callback) => {
+    // Autorise les requêtes sans origin (ex: postman) ou celles dans la liste
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -30,20 +36,34 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Middleware de log en développement
+// Middleware de logging en développement
 if (process.env.NODE_ENV === 'development') {
   app.use((req, res, next) => {
-    console.log(`${req.method} ${req.originalUrl} - ${new Date().toISOString()}`);
+    console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);
     next();
   });
 }
 
-// ✅ Point d’entrée des routes (centralisé)
-app.use('/api', routes);
+// Routes API
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/admin', emailRoutes); // ✔️ Unifié sous /api/admin
+app.use('/api/contacts', contactRoutes);
+app.use('/api/appointments', appointmentRoutes);
 
-// ✅ Middleware de gestion d’erreurs
+// Route de santé de l'API
+app.get('/api/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'API fonctionne correctement',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Middleware de gestion d'erreurs globales
 app.use((err, req, res, next) => {
-  console.error('❌ Erreur non gérée :', err.message);
+  console.error('❌ Erreur non gérée:', err.message);
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Erreur interne du serveur',
@@ -51,7 +71,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ✅ Route 404 (pour les routes non trouvées)
+// Route 404 pour les routes non trouvées
 app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
@@ -59,7 +79,7 @@ app.use('*', (req, res) => {
   });
 });
 
-// ✅ Démarrage du serveur
+// Démarrage du serveur
 const PORT = process.env.PORT || 3001;
 
 async function startServer() {
@@ -74,7 +94,7 @@ async function startServer() {
 
     app.listen(PORT, () => {
       console.log(`🚀 Serveur démarré sur le port ${PORT}`);
-      console.log(`📝 API: http://localhost:${PORT}/api`);
+      console.log(`📝 API disponible sur: http://localhost:${PORT}/api`);
       console.log(`❤️  Health check: http://localhost:${PORT}/api/health`);
     });
 
@@ -84,7 +104,7 @@ async function startServer() {
   }
 }
 
-// ✅ Gestion propre des arrêts
+// Gestion des signaux pour fermeture propre
 process.on('SIGINT', async () => {
   console.log('\n⏹️  Arrêt du serveur...');
   await sequelize.close();
