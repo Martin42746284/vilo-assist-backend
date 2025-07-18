@@ -12,6 +12,7 @@ const appointmentRoutes = require('./routes/appointments');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const emailRoutes = require('./routes/email');
+const testimonialRoutes = require('./routes/testimonial'); // Import des routes de témoignages
 
 const app = express();
 
@@ -50,6 +51,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/admin', emailRoutes); // ✔️ Unifié sous /api/admin
 app.use('/api/contacts', contactRoutes);
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api/testimonials', testimonialRoutes); // ✔️ Routes de témoignages
 
 // ✅ Route de santé de l'API
 app.get('/api/health', (req, res) => {

@@ -5,19 +5,20 @@ const { validationResult, body } = require('express-validator');
 
 // Middleware de validation
 const validateTestimonial = [
-  body('name').notEmpty().withMessage('Le nom est requis').isLength({ min: 2, max: 100 }).withMessage('Le nom doit comporter entre 2 et 100 caractères'),
-  body('comment').notEmpty().withMessage('Le commentaire est requis'),
-  body('rating').isInt({ min: 1, max: 5 }).withMessage('La note doit être entre 1 et 5')
+  body('name')
+    .notEmpty().withMessage('Le nom est requis')
+    .isLength({ min: 2, max: 100 }).withMessage('Le nom doit comporter entre 2 et 100 caractères'),
+  body('comment')
+    .notEmpty().withMessage('Le commentaire est requis'),
+  body('rating')
+    .isInt({ min: 1, max: 5 }).withMessage('La note doit être entre 1 et 5')
 ];
 
-// POST /api/testimonials - Ajouter un témoignage
+// ➕ POST /api/testimonials - Créer un témoignage
 router.post('/', validateTestimonial, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ 
-      success: false, 
-      errors: errors.array() 
-    });
+    return res.status(400).json({ success: false, errors: errors.array() });
   }
 
   try {
@@ -27,8 +28,8 @@ router.post('/', validateTestimonial, async (req, res) => {
 
     res.status(201).json({
       success: true,
-      data: testimonial,
-      message: 'Témoignage créé avec succès.'
+      message: 'Témoignage créé avec succès.',
+      data: testimonial
     });
   } catch (error) {
     console.error('Erreur création témoignage:', error);
@@ -40,13 +41,13 @@ router.post('/', validateTestimonial, async (req, res) => {
   }
 });
 
-// GET /api/testimonials - Lister les témoignages avec pagination
+// 📃 GET /api/testimonials - Liste paginée
 router.get('/', async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
     const offset = (page - 1) * limit;
 
-    const { count, rows: testimonials } = await Testimonial.findAndCountAll({
+    const { count, rows } = await Testimonial.findAndCountAll({
       limit: parseInt(limit),
       offset: parseInt(offset),
       order: [['createdAt', 'DESC']]
@@ -54,7 +55,7 @@ router.get('/', async (req, res) => {
 
     res.json({
       success: true,
-      data: testimonials,
+      data: rows,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -66,13 +67,13 @@ router.get('/', async (req, res) => {
     console.error('Erreur récupération témoignages:', error);
     res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
+      message: 'Erreur serveur lors de la récupération des témoignages.',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
 
-// GET /api/testimonials/:id - Détail d’un témoignage
+// 🔍 GET /api/testimonials/:id - Détail d’un témoignage
 router.get('/:id', async (req, res) => {
   try {
     const testimonial = await Testimonial.findByPk(req.params.id);
@@ -86,20 +87,17 @@ router.get('/:id', async (req, res) => {
     console.error('Erreur récupération témoignage:', error);
     res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
+      message: 'Erreur serveur.',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
 
-// PUT /api/testimonials/:id - Modifier un témoignage
+// ✏️ PUT /api/testimonials/:id - Modifier un témoignage
 router.put('/:id', validateTestimonial, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ 
-      success: false, 
-      errors: errors.array() 
-    });
+    return res.status(400).json({ success: false, errors: errors.array() });
   }
 
   try {
@@ -111,22 +109,22 @@ router.put('/:id', validateTestimonial, async (req, res) => {
     const { name, comment, rating, date } = req.body;
     await testimonial.update({ name, comment, rating, date });
 
-    res.json({ 
-      success: true, 
-      data: testimonial,
-      message: 'Témoignage mis à jour avec succès'
+    res.json({
+      success: true,
+      message: 'Témoignage mis à jour avec succès',
+      data: testimonial
     });
   } catch (error) {
     console.error('Erreur mise à jour témoignage:', error);
     res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
+      message: 'Erreur serveur.',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
 
-// DELETE /api/testimonials/:id - Supprimer un témoignage
+// 🗑️ DELETE /api/testimonials/:id - Supprimer un témoignage
 router.delete('/:id', async (req, res) => {
   try {
     const testimonial = await Testimonial.findByPk(req.params.id);
@@ -136,12 +134,15 @@ router.delete('/:id', async (req, res) => {
 
     await testimonial.destroy();
 
-    res.json({ success: true, message: 'Témoignage supprimé avec succès' });
+    res.json({
+      success: true,
+      message: 'Témoignage supprimé avec succès'
+    });
   } catch (error) {
     console.error('Erreur suppression témoignage:', error);
     res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
+      message: 'Erreur serveur.',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
