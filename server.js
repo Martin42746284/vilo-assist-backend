@@ -51,7 +51,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/admin', emailRoutes); // ✔️ Unifié sous /api/admin
 app.use('/api/contacts', contactRoutes);
 app.use('/api/appointments', appointmentRoutes);
-app.use('/api/testimonials', testimonialRoutes); // ✔️ Routes de témoignages
+app.use('/api/testimonial', testimonialRoutes); // ✔️ Routes de témoignages
 
 // ✅ Route de santé de l'API
 app.get('/api/health', (req, res) => {
