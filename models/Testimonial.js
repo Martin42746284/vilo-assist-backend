@@ -22,6 +22,10 @@ module.exports = (sequelize) => {
         notEmpty: { msg: 'Comment is required' }
       }
     },
+    isApproved: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
     rating: {
       type: DataTypes.INTEGER,
       allowNull: false,
