@@ -50,4 +50,35 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+router.put('/:id/approve', async (req, res) => {
+  try {
+    const { approved } = req.body;
+    const testimonial = await Testimonial.findByPk(req.params.id);
+    if (!testimonial) return res.status(404).json({ success: false, message: "Non trouvé" });
+
+    testimonial.approved = approved;
+    await testimonial.save();
+
+    res.json({ success: true, testimonial });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Erreur serveur" });
+  }
+});
+
+router.put('/:id/publish', async (req, res) => {
+  try {
+    const { published } = req.body;
+    const testimonial = await Testimonial.findByPk(req.params.id);
+    if (!testimonial) return res.status(404).json({ success: false, message: "Non trouvé" });
+
+    testimonial.published = published;
+    await testimonial.save();
+
+    res.json({ success: true, testimonial });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Erreur serveur" });
+  }
+});
+
+
 module.exports = router;
