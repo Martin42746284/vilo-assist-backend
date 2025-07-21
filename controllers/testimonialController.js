@@ -1,13 +1,12 @@
-const Testimonial = require('../models/Testimonial');
+const { Testimonial } = require('../models');
 const { validationResult } = require('express-validator');
 
-// Obtenir tous les témoignages (optionnel : uniquement approuvés)
+// GET - Récupérer tous les témoignages
 exports.getTestimonials = async (req, res) => {
   try {
     const testimonials = await Testimonial.findAll({
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt', 'DESC']],
     });
-
     res.json({ success: true, data: testimonials });
   } catch (err) {
     console.error(err.message);
@@ -15,7 +14,7 @@ exports.getTestimonials = async (req, res) => {
   }
 };
 
-// Créer un nouveau témoignage
+// POST - Créer un nouveau témoignage
 exports.createTestimonial = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -23,15 +22,15 @@ exports.createTestimonial = async (req, res) => {
   }
 
   try {
-    const { nom, post, Entreprise, comment, rating, date } = req.body;
+    const { name, position, company, rating, comment, photo } = req.body;
 
     const testimonial = await Testimonial.create({
-      nom,
-      post,
-      Entreprise,
-      comment,
+      name,
+      position,
+      company,
       rating,
-      date
+      comment,
+      photo,
     });
 
     res.status(201).json({ success: true, data: testimonial });
@@ -41,33 +40,13 @@ exports.createTestimonial = async (req, res) => {
   }
 };
 
-// Mettre à jour l’approbation d’un témoignage
-exports.approveTestimonial = async (req, res) => {
-  try {
-    const { isApproved } = req.body;
-    const testimonial = await Testimonial.findByPk(req.params.id);
-
-    if (!testimonial) {
-      return res.status(404).json({ success: false, message: 'Témoignage non trouvé' });
-    }
-
-    testimonial.isApproved = isApproved;
-    await testimonial.save();
-
-    res.json({ success: true, data: testimonial });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ success: false, message: 'Erreur serveur' });
-  }
-};
-
-// Supprimer un témoignage
+// DELETE - Supprimer un témoignage
 exports.deleteTestimonial = async (req, res) => {
   try {
     const testimonial = await Testimonial.findByPk(req.params.id);
 
     if (!testimonial) {
-      return res.status(404).json({ success: false, message: 'Témoignage non trouvé' });
+      return res.status(404).json({ success: false, message: 'Témoignage introuvable' });
     }
 
     await testimonial.destroy();
@@ -77,5 +56,3 @@ exports.deleteTestimonial = async (req, res) => {
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };
-
-

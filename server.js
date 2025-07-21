@@ -12,7 +12,7 @@ const appointmentRoutes = require('./routes/appointments');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const emailRoutes = require('./routes/email');
-const testimonialRoutes = require('./routes/testimonial'); // Import des routes de témoignages
+const testimonialRoutes = require('./routes/testimonials'); // ✔️ Routes de témoignages
 
 const app = express();
 
