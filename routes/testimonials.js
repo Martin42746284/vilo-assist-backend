@@ -38,15 +38,6 @@ router.get('/', async (req, res) => {
 });
 
 
-// ✅ Middleware de validation (sans `photo`)
-const validateTestimonial = [
-  body('name').notEmpty().withMessage('Nom requis'),
-  body('post').notEmpty().withMessage('Post requis'),
-  body('entreprise').notEmpty().withMessage('Entreprise requise'),
-  body('rating').isInt({ min: 1, max: 5 }).withMessage('Note invalide'),
-  body('comment').notEmpty().withMessage('Commentaire requis'),
-];
-
 // ✅ POST new testimonial (avec photo)
 router.post('/', upload.single('photo'), async (req, res) => {
   try {
