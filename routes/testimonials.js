@@ -48,35 +48,30 @@ const validateTestimonial = [
 ];
 
 // ✅ POST new testimonial (avec photo)
-router.post(
-  '/',
-  upload.single('photo'), // gestion du fichier
-  validateTestimonial,
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ success: false, errors: errors.array() });
-    }
+router.post('/', upload.single('photo'), async (req, res) => {
+  try {
+    const { name, post, entreprise, rating, comment } = req.body;
 
-    try {
-      const { name, post, entreprise, rating, comment } = req.body;
+    const newTestimonial = await Testimonial.create({
+      name,
+      post,
+      entreprise,
+      rating,
+      comment,
+      photo: req.file ? req.file.filename : null
+    });
 
-      const newTestimonial = await Testimonial.create({
-        name,
-        post,
-        entreprise,
-        rating,
-        comment,
-        photoUrl: req.file ? `/uploads/${req.file.filename}` : null,
-      });
-
-      res.json({ success: true, testimonial: newTestimonial });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ success: false, message: 'Erreur serveur' });
-    }
+    res.status(201).json({
+      success: true,
+      testimonial: newTestimonial
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message
+    });
   }
-);
+});
 
 // DELETE testimonial
 router.delete('/:id', async (req, res) => {
