@@ -14,7 +14,7 @@ exports.getTestimonials = async (req, res) => {
   }
 };
 
-// POST - Créer un nouveau témoignage
+// POST - Créer un nouveau témoignage (sans image)
 exports.createTestimonial = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -22,15 +22,14 @@ exports.createTestimonial = async (req, res) => {
   }
 
   try {
-    const { name, position, company, rating, comment, photo } = req.body;
+    const { name, post, entreprise, rating, comment } = req.body;
 
     const testimonial = await Testimonial.create({
       name,
-      position,
-      company,
+      post,
+      entreprise,
       rating,
       comment,
-      photo,
     });
 
     res.status(201).json({ success: true, data: testimonial });

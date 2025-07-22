@@ -1,45 +1,22 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
 const { Testimonial } = require('../models');
-// 📁 Configuration Multer (enregistre dans /uploads)
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/'); // ce dossier doit exister
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
-});
-const upload = multer({ storage });
 
 // GET all testimonials
 router.get('/', async (req, res) => {
   try {
-    const testimonials = await Testimonial.findAll({ order: [['createdAt', 'DESC']] });
+    const testimonials = await Testimonial.findAll({
+      order: [['createdAt', 'DESC']]
+    });
 
-    const formatted = testimonials.map(t => ({
-      id: t.id,
-      name: t.name,
-      post: t.post,
-      entreprise: t.entreprise,
-      rating: t.rating,
-      comment: t.comment,
-      photoUrl: t.photo ? `${process.env.BASE_URL}/uploads/${t.photo}` : null,
-      createdAt: t.createdAt,
-      updatedAt: t.updatedAt
-    }));
-
-    res.json({ success: true, testimonials: formatted });
+    res.json({ success: true, testimonials });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
 
-
-// ✅ POST new testimonial (avec photo)
-router.post('/', upload.single('photo'), async (req, res) => {
+// POST new testimonial (sans photo)
+router.post('/', async (req, res) => {
   try {
     const { name, post, entreprise, rating, comment } = req.body;
 
@@ -48,8 +25,7 @@ router.post('/', upload.single('photo'), async (req, res) => {
       post,
       entreprise,
       rating,
-      comment,
-      photo: req.file ? req.file.filename : null
+      comment
     });
 
     res.status(201).json({
@@ -71,42 +47,49 @@ router.delete('/:id', async (req, res) => {
     if (!testimonial) {
       return res.status(404).json({ success: false, message: 'Témoignage introuvable' });
     }
+
     await testimonial.destroy();
-    res.json({ success: true });
+    res.json({ success: true, message: 'Témoignage supprimé' });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
 
-// Approve testimonial
+// PUT - Approve testimonial
 router.put('/:id/approve', async (req, res) => {
   try {
     const { approved } = req.body;
     const testimonial = await Testimonial.findByPk(req.params.id);
-    if (!testimonial) return res.status(404).json({ success: false, message: "Non trouvé" });
+
+    if (!testimonial) {
+      return res.status(404).json({ success: false, message: 'Témoignage introuvable' });
+    }
 
     testimonial.approved = approved;
     await testimonial.save();
 
     res.json({ success: true, testimonial });
   } catch (err) {
-    res.status(500).json({ success: false, message: "Erreur serveur" });
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
 
-// Publish testimonial
+// PUT - Publish testimonial
 router.put('/:id/publish', async (req, res) => {
   try {
     const { published } = req.body;
     const testimonial = await Testimonial.findByPk(req.params.id);
-    if (!testimonial) return res.status(404).json({ success: false, message: "Non trouvé" });
+
+    if (!testimonial) {
+      return res.status(404).json({ success: false, message: 'Témoignage introuvable' });
+    }
 
     testimonial.published = published;
     await testimonial.save();
 
     res.json({ success: true, testimonial });
   } catch (err) {
-    res.status(500).json({ success: false, message: "Erreur serveur" });
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
 
