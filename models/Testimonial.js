@@ -4,23 +4,43 @@ module.exports = (sequelize) => {
   const Testimonial = sequelize.define('Testimonial', {
     name: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
     },
-    post: {
+    role: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
     },
-    entreprise: {
+    company: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
+    },
+    content: {
+      type: DataTypes.TEXT,
+      allowNull: false,
     },
     rating: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: false,
+      validate: {
+        min: 1,
+        max: 5,
+      },
     },
-    comment: {
-      type: DataTypes.TEXT,
-      allowNull: false
+    photoUrl: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    bgImage: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    approved: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    published: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     }
   });
 

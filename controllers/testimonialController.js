@@ -1,7 +1,36 @@
 const { Testimonial } = require('../models');
-const { validationResult } = require('express-validator');
+const { validationResult, body } = require('express-validator');
 
-// GET - Récupérer tous les témoignages
+// ✅ Middleware de validation pour création de témoignage
+exports.validateTestimonial = [
+  body('name')
+    .notEmpty().withMessage('Le nom est requis')
+    .isLength({ min: 2, max: 100 }).withMessage('Le nom doit contenir entre 2 et 100 caractères'),
+
+  body('role')
+    .notEmpty().withMessage('Le poste est requis'),
+
+  body('company')
+    .notEmpty().withMessage('Le nom de l’entreprise est requis'),
+
+  body('content')
+    .notEmpty().withMessage('Le commentaire est requis')
+    .isLength({ max: 1000 }).withMessage('Le commentaire ne doit pas dépasser 1000 caractères'),
+
+  body('rating')
+    .notEmpty().withMessage('La note est requise')
+    .isInt({ min: 1, max: 5 }).withMessage('La note doit être comprise entre 1 et 5'),
+
+  body('photoUrl')
+    .optional()
+    .isURL().withMessage('L’URL de la photo est invalide'),
+
+  body('bgImage')
+    .optional()
+    .isURL().withMessage('L’URL de l’image de fond est invalide')
+];
+
+// ✅ GET - Récupérer tous les témoignages
 exports.getTestimonials = async (req, res) => {
   try {
     const testimonials = await Testimonial.findAll({
@@ -14,7 +43,7 @@ exports.getTestimonials = async (req, res) => {
   }
 };
 
-// POST - Créer un nouveau témoignage (sans image)
+// ✅ POST - Créer un nouveau témoignage
 exports.createTestimonial = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -22,14 +51,16 @@ exports.createTestimonial = async (req, res) => {
   }
 
   try {
-    const { name, post, entreprise, rating, comment } = req.body;
+    const { name, role, company, content, rating, photoUrl, bgImage } = req.body;
 
     const testimonial = await Testimonial.create({
       name,
-      post,
-      entreprise,
+      role,
+      company,
+      content,
       rating,
-      comment,
+      photoUrl,
+      bgImage
     });
 
     res.status(201).json({ success: true, data: testimonial });
@@ -39,7 +70,7 @@ exports.createTestimonial = async (req, res) => {
   }
 };
 
-// DELETE - Supprimer un témoignage
+// ✅ DELETE - Supprimer un témoignage
 exports.deleteTestimonial = async (req, res) => {
   try {
     const testimonial = await Testimonial.findByPk(req.params.id);
