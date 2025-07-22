@@ -3,17 +3,14 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const { Testimonial } = require('../models');
-
-// Configuration de multer
+// 📁 Configuration Multer (enregistre dans /uploads)
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // dossier public pour les fichiers uploadés
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/'); // ce dossier doit exister
   },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1E9) + ext;
-    cb(null, uniqueName);
-  }
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
 });
 const upload = multer({ storage });
 
@@ -40,33 +37,46 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST new testimonial (avec photo)
-router.post('/', upload.single('photo'), async (req, res) => {
-  try {
-    const { name, post, entreprise, rating, comment } = req.body;
 
-    // Vérifie les champs obligatoires
-    if (!name || !post || !entreprise || !rating || !comment) {
-      return res.status(400).json({ success: false, message: 'Champs requis manquants.' });
+// ✅ Middleware de validation (sans `photo`)
+const validateTestimonial = [
+  body('name').notEmpty().withMessage('Nom requis'),
+  body('post').notEmpty().withMessage('Post requis'),
+  body('entreprise').notEmpty().withMessage('Entreprise requise'),
+  body('rating').isInt({ min: 1, max: 5 }).withMessage('Note invalide'),
+  body('comment').notEmpty().withMessage('Commentaire requis'),
+];
+
+// ✅ POST new testimonial (avec photo)
+router.post(
+  '/',
+  upload.single('photo'), // gestion du fichier
+  validateTestimonial,
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
     }
 
-    const photo = req.file ? req.file.filename : null;
+    try {
+      const { name, post, entreprise, rating, comment } = req.body;
 
-    const testimonial = await Testimonial.create({
-      name,
-      post,
-      entreprise,
-      rating: parseInt(rating),
-      comment,
-      photo,
-    });
+      const newTestimonial = await Testimonial.create({
+        name,
+        post,
+        entreprise,
+        rating,
+        comment,
+        photoUrl: req.file ? `/uploads/${req.file.filename}` : null,
+      });
 
-    res.status(201).json({ success: true, testimonial });
-  } catch (err) {
-    console.error('Erreur POST /testimonials:', err);
-    res.status(400).json({ success: false, message: 'Erreur de validation', error: err.message });
+      res.json({ success: true, testimonial: newTestimonial });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ success: false, message: 'Erreur serveur' });
+    }
   }
-});
+);
 
 // DELETE testimonial
 router.delete('/:id', async (req, res) => {
