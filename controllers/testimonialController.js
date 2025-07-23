@@ -7,27 +7,19 @@ exports.validateTestimonial = [
     .notEmpty().withMessage('Le nom est requis')
     .isLength({ min: 2, max: 100 }).withMessage('Le nom doit contenir entre 2 et 100 caractères'),
 
-  body('role')
+  body('post')
     .notEmpty().withMessage('Le poste est requis'),
 
-  body('company')
+  body('entreprise')
     .notEmpty().withMessage('Le nom de l’entreprise est requis'),
 
-  body('content')
+  body('comment')
     .notEmpty().withMessage('Le commentaire est requis')
     .isLength({ max: 1000 }).withMessage('Le commentaire ne doit pas dépasser 1000 caractères'),
 
   body('rating')
     .notEmpty().withMessage('La note est requise')
-    .isInt({ min: 1, max: 5 }).withMessage('La note doit être comprise entre 1 et 5'),
-
-  body('photoUrl')
-    .optional()
-    .isURL().withMessage('L’URL de la photo est invalide'),
-
-  body('bgImage')
-    .optional()
-    .isURL().withMessage('L’URL de l’image de fond est invalide')
+    .isInt({ min: 1, max: 5 }).withMessage('La note doit être comprise entre 1 et 5')
 ];
 
 // ✅ GET - Récupérer tous les témoignages
@@ -51,22 +43,45 @@ exports.createTestimonial = async (req, res) => {
   }
 
   try {
-    const { name, role, company, content, rating, photoUrl, bgImage } = req.body;
+    const { name, post, entreprise, comment, rating } = req.body;
+
+    if (!name || !post || !entreprise || !comment || !rating) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tous les champs sont obligatoires.'
+      });
+    }
 
     const testimonial = await Testimonial.create({
       name,
-      role,
-      company,
-      content,
+      post,
+      entreprise,
+      comment,
       rating,
-      photoUrl,
-      bgImage
+      status: 'pending'
     });
 
-    res.status(201).json({ success: true, data: testimonial });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ success: false, message: 'Erreur serveur' });
+    res.status(201).json({
+      success: true,
+      data: testimonial,
+      message: 'Témoignage soumis avec succès. Il sera publié après modération.'
+    });
+
+  } catch (error) {
+    console.error('Erreur création témoignage:', error);
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Erreur de validation',
+        errors: error.errors.map(e => e.message)
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur lors de la création du témoignage.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
