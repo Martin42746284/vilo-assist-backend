@@ -11,9 +11,9 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    const { name, role, company, content, rating } = req.body;
+    const { name, post, entreprise, comment, rating } = req.body;
 
-    if (!name || !role || !company || !content || !rating) {
+    if (!name || !post || !entreprise || !comment || !rating) {
       return res.status(400).json({
         success: false,
         message: 'Tous les champs sont obligatoires.'
@@ -22,9 +22,9 @@ router.post('/', async (req, res) => {
 
     const newTestimonial = await Testimonial.create({
       name,
-      role,
-      company,
-      content,
+      post,
+      entreprise,
+      comment,
       rating,
       status: 'pending'
     });
@@ -57,7 +57,7 @@ router.post('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const testimonial = await Testimonial.findByPk(req.params.id, {
-      attributes: ['id', 'name', 'role', 'company', 'content', 'rating', 'status', 'createdAt']
+      attributes: ['id', 'name', 'post', 'entreprise', 'comment', 'rating', 'status', 'createdAt']
     });
 
     if (!testimonial) {
@@ -92,13 +92,13 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Témoignage non trouvé' });
     }
 
-    const { name, role, company, content, rating, status } = req.body;
+    const { name, post, entreprise, comment, rating, status } = req.body;
 
     const updates = {};
     if (name) updates.name = name;
-    if (role) updates.role = role;
-    if (company) updates.company = company;
-    if (content) updates.content = content;
+    if (post) updates.post = post;
+    if (entreprise) updates.entreprise = entreprise;
+    if (comment) updates.comment = comment;
     if (rating) updates.rating = rating;
     if (status) updates.status = status;
 
@@ -179,7 +179,7 @@ router.get('/', async (req, res) => {
     const testimonials = await Testimonial.findAll({
       where: { status: 'approved' },
       order: [['createdAt', 'DESC']],
-      attributes: ['id', 'name', 'role', 'company', 'content', 'rating', 'createdAt']
+      attributes: ['id', 'name', 'post', 'entreprise', 'comment', 'rating', 'createdAt']
     });
 
     res.json({ 

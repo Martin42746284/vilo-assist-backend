@@ -37,21 +37,19 @@ exports.getTestimonials = async (req, res) => {
 
 // ✅ POST - Créer un nouveau témoignage
 exports.createTestimonial = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ success: false, errors: errors.array() });
+  console.log('Contenu de req.body:', req.body);
+
+  const { name, post, entreprise, comment, rating } = req.body;
+
+  if (!name || !post || !entreprise || !comment || !rating) {
+    return res.status(400).json({
+      success: false,
+      message: 'Tous les champs sont obligatoires.',
+      data: { name, post, entreprise, comment, rating }
+    });
   }
 
   try {
-    const { name, post, entreprise, comment, rating } = req.body;
-
-    if (!name || !post || !entreprise || !comment || !rating) {
-      return res.status(400).json({
-        success: false,
-        message: 'Tous les champs sont obligatoires.'
-      });
-    }
-
     const testimonial = await Testimonial.create({
       name,
       post,
@@ -64,26 +62,18 @@ exports.createTestimonial = async (req, res) => {
     res.status(201).json({
       success: true,
       data: testimonial,
-      message: 'Témoignage soumis avec succès. Il sera publié après modération.'
+      message: 'Témoignage soumis avec succès.'
     });
-
   } catch (error) {
     console.error('Erreur création témoignage:', error);
-    if (error.name === 'SequelizeValidationError') {
-      return res.status(400).json({
-        success: false,
-        message: 'Erreur de validation',
-        errors: error.errors.map(e => e.message)
-      });
-    }
-
     res.status(500).json({
       success: false,
-      message: 'Erreur serveur lors de la création du témoignage.',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: 'Erreur serveur',
+      error: error.message
     });
   }
 };
+
 
 // ✅ DELETE - Supprimer un témoignage
 exports.deleteTestimonial = async (req, res) => {
