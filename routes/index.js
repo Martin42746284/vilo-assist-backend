@@ -9,6 +9,7 @@ const appointmentRoutes = require('./appointments');
 const adminRoutes = require('./admin');
 const userRoutes = require('./users');
 const testRoutes = require('./routes/test'); // chemin à adapter
+const testimonialRoutes = require('./testimonials');
 
 // Configuration des routes
 router.use('/auth', authRoutes);
@@ -17,6 +18,7 @@ router.use('/appointments', appointmentRoutes);
 router.use('/admin', adminRoutes);
 router.use('/users', userRoutes);
 router.use('/api', testRoutes);
+router.use('/api', testimonialRoutes);
 
 // Route de test
 router.get('/health', (req, res) => {

@@ -2,21 +2,34 @@ const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
   const Testimonial = sequelize.define('Testimonial', {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
+    },
     name: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(100),
       allowNull: false,
+      validate: {
+        notEmpty: true,
+        len: [2, 100]
+      }
     },
-    role: {
-      type: DataTypes.STRING,
+    post: {
+      type: DataTypes.STRING(100),
       allowNull: false,
+      validate: {
+        notEmpty: true,
+        len: [2, 100]
+      }
     },
-    company: {
-      type: DataTypes.STRING,
+    entreprise: {
+      type: DataTypes.STRING(150),
       allowNull: false,
-    },
-    content: {
-      type: DataTypes.TEXT,
-      allowNull: false,
+      validate: {
+        notEmpty: true,
+        len: [2, 150]
+      }
     },
     rating: {
       type: DataTypes.INTEGER,
@@ -24,24 +37,46 @@ module.exports = (sequelize) => {
       validate: {
         min: 1,
         max: 5,
+        isInt: true
+      }
+    },
+    comment: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      validate: {
+        notEmpty: true,
+        len: [10, 1000]
+      }
+    },
+    status: {
+      type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+      defaultValue: 'pending',
+      allowNull: false
+    },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'users',
+        key: 'id'
       },
-    },
-    photoUrl: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    bgImage: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    approved: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false
-    },
-    published: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false
+      onDelete: 'SET NULL',
+      onUpdate: 'CASCADE'
     }
+  }, {
+    tableName: 'testimonials',
+    timestamps: true,
+    indexes: [
+      {
+        fields: ['status']
+      },
+      {
+        fields: ['rating']
+      },
+      {
+        fields: ['userId']
+      }
+    ]
   });
 
   return Testimonial;

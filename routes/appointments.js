@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { Testimonial } = require('../models');
+const { Appointment, Contact } = require('../models');
 const { validationResult } = require('express-validator');
 
-// POST /api/testimonials - Créer un témoignage
+// POST /api/appointments - Créer un nouveau rendez-vous
 router.post('/', async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -11,72 +11,67 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    const {
-      name,
-      role,
-      company,
-      content,
-      rating,
-      photoUrl,
-      bgImage
-    } = req.body;
+    const { client_name, client_email, date, time, service, message } = req.body;
 
-    if (!name || !role || !company || !content || !rating) {
+    if (!client_name || !client_email || !date || !time || !service) {
       return res.status(400).json({
         success: false,
-        message: 'Les champs name, role, company, content et rating sont obligatoires.'
+        message: 'Les champs client_name, client_email, date, time et service sont obligatoires.'
       });
     }
 
-    const newTestimonial = await Testimonial.create({
-      name,
-      role,
-      company,
-      content,
-      rating,
-      photoUrl,
-      bgImage,
-      approved: false,
-      published: false
+    if (message) {
+      await Contact.create({ name: client_name, email: client_email, service, message });
+    }
+
+    const newAppointment = await Appointment.create({
+      client_name,
+      client_email,
+      date,
+      time,
+      service,
+      status: 'en_attente'
     });
 
     res.status(201).json({
       success: true,
-      data: newTestimonial,
-      message: 'Témoignage créé avec succès.'
+      data: newAppointment,
+      message: 'Rendez-vous créé avec succès.'
     });
 
   } catch (error) {
-    console.error('Erreur création témoignage:', error);
+    console.error('Erreur création rendez-vous:', error);
     if (error.name === 'SequelizeValidationError') {
       return res.status(400).json({
         success: false,
-        message: 'Erreur de validation',
+        message: 'Validation error',
         errors: error.errors.map(e => e.message)
       });
     }
 
     res.status(500).json({
       success: false,
-      message: 'Erreur serveur lors de la création du témoignage.',
+      message: 'Erreur serveur lors de la création du rendez-vous.',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
 
-// GET /api/testimonials/:id - Récupérer un témoignage
+// GET /api/appointments/:id
 router.get('/:id', async (req, res) => {
   try {
-    const testimonial = await Testimonial.findByPk(req.params.id);
+    const appointment = await Appointment.findByPk(req.params.id, {
+      attributes: ['id', 'client_name', 'client_email', 'date', 'time', 'service', 'status', 'createdAt']
+    });
 
-    if (!testimonial) {
-      return res.status(404).json({ success: false, message: 'Témoignage non trouvé' });
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: 'Rendez-vous non trouvé' });
     }
 
-    res.json({ success: true, data: testimonial });
+    res.json({ success: true, data: appointment });
 
   } catch (error) {
-    console.error('Erreur récupération témoignage:', error);
+    console.error('Erreur récupération rendez-vous:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur serveur',
@@ -85,54 +80,35 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// PUT /api/testimonials/:id/approve - Met à jour le statut "approved"
-router.put('/:id/approve', async (req, res) => {
+// PUT /api/appointments/:id
+router.put('/:id', async (req, res) => {
   try {
-    const testimonial = await Testimonial.findByPk(req.params.id);
+    const appointment = await Appointment.findByPk(req.params.id);
 
-    if (!testimonial) {
-      return res.status(404).json({ success: false, message: 'Témoignage non trouvé' });
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: 'Rendez-vous non trouvé' });
     }
 
-    testimonial.approved = req.body.approved;
-    await testimonial.save();
+    const { status } = req.body;
+
+    await appointment.update({ status });
 
     res.json({
       success: true,
-      data: testimonial,
-      message: `Témoignage ${testimonial.approved ? 'approuvé' : 'désapprouvé'}`
+      data: appointment,
+      message: 'Rendez-vous mis à jour avec succès'
     });
 
   } catch (error) {
-    console.error('Erreur approbation témoignage:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erreur serveur',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
-});
-
-// PUT /api/testimonials/:id/publish - Met à jour le statut "published"
-router.put('/:id/publish', async (req, res) => {
-  try {
-    const testimonial = await Testimonial.findByPk(req.params.id);
-
-    if (!testimonial) {
-      return res.status(404).json({ success: false, message: 'Témoignage non trouvé' });
+    console.error('Erreur mise à jour rendez-vous:', error);
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        errors: error.errors.map(e => e.message)
+      });
     }
 
-    testimonial.published = req.body.published;
-    await testimonial.save();
-
-    res.json({
-      success: true,
-      data: testimonial,
-      message: `Témoignage ${testimonial.published ? 'publié' : 'dépublié'}`
-    });
-
-  } catch (error) {
-    console.error('Erreur publication témoignage:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur serveur',
@@ -141,31 +117,52 @@ router.put('/:id/publish', async (req, res) => {
   }
 });
 
-// DELETE /api/testimonials/:id
+// DELETE /api/appointments/:id
 router.delete('/:id', async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  console.log(`🗑️ Suppression témoignage ID: ${id}`);
+
+  console.log(`🗑️ Tentative suppression rendez-vous ID: ${id}`);
 
   if (isNaN(id)) {
-    return res.status(400).json({ success: false, message: 'ID invalide' });
+    return res.status(400).json({
+      success: false,
+      message: 'ID invalide'
+    });
   }
 
   try {
-    const testimonial = await Testimonial.findByPk(id);
+    const appointment = await Appointment.findByPk(id);
 
-    if (!testimonial) {
-      return res.status(404).json({ success: false, message: 'Témoignage non trouvé' });
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Rendez-vous non trouvé'
+      });
     }
 
-    await testimonial.destroy();
+    if (appointment.status === 'confirmé') {
+      return res.status(400).json({
+        success: false,
+        message: 'Impossible de supprimer un rendez-vous confirmé. Veuillez d\'abord l\'annuler.'
+      });
+    }
+
+    await appointment.destroy();
 
     res.json({
       success: true,
-      message: 'Témoignage supprimé avec succès'
+      message: 'Rendez-vous supprimé avec succès'
     });
 
   } catch (error) {
-    console.error('Erreur suppression témoignage:', error);
+    console.error('Erreur suppression rendez-vous:', error);
+    if (error.name === 'SequelizeForeignKeyConstraintError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Impossible de supprimer ce rendez-vous car il est lié à d\'autres données'
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Erreur serveur lors de la suppression',
